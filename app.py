@@ -67,7 +67,7 @@ def fetch_api_data():
         data = {
             'API_KEY': API_KEY
         }
-        response = requests.post(API_URL, data=data, timeout=30)
+        response = requests.post(API_URL, data=data, timeout=1000)
         response.raise_for_status()
         return response.json()
     except requests.exceptions.RequestException as e:
