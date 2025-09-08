@@ -192,7 +192,7 @@ FONT_DATE   = pick_font([f"{WIN}/segoeuib.ttf", f"{LIN}/DejaVuSans-Bold.ttf"], 3
 FONT_H1     = pick_font([f"{WIN}/segoeuib.ttf", f"{LIN}/DejaVuSans-Bold.ttf"], 48)
 FONT_BODY   = pick_font([f"{WIN}/segoeui.ttf",  f"{LIN}/DejaVuSans.ttf"], 34)
 FONT_BODY_B = pick_font([f"{WIN}/segoeuib.ttf", f"{LIN}/DejaVuSans-Bold.ttf"], 34)
-FONT_RIGHT  = pick_font([f"{WIN}/segoeuib.ttf", f"{LIN}/DejaVuSans-Bold.ttf"], 32)
+FONT_RIGHT  = pick_font([f"{WIN}/segoeuib.ttf", f"{LIN}/DejaVuSans-Bold.ttf"], 28)
 
 # === Layout ===
 MARGIN_L   = 48
