@@ -33,7 +33,7 @@ jobs:
         
     - name: Generate dashboard
       run: |
-        python automated_river_dashboard.py
+        python app.py
         
     - name: Configure Git
       run: |
