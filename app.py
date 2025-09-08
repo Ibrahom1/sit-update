@@ -21,6 +21,7 @@ SEVERITY_COLORS = {
     "MEDIUM":     "#F2B233",
     "HIGH":       "#C95E0C",
     "VERY_HIGH":  "#FF2222",
+    "V_HIGH":     "#FF2222",
     "EX_HIGH":    "#5A0A0A",
     "EXCEPTIONALLY_HIGH": "#5A0A0A",
     "EXCEPTIONALLY HIGH": "#5A0A0A",
