@@ -67,7 +67,7 @@ def fetch_api_data():
         data = {
             'API_KEY': API_KEY
         }
-        response = requests.post(API_URL, data=data, timeout=1000)
+        response = requests.post(API_URL, data=data, timeout=30)
         response.raise_for_status()
         return response.json()
     except requests.exceptions.RequestException as e:
@@ -116,9 +116,23 @@ def create_dashboard(api_data):
     latest_time = api_data.get('latest_reading_time', '')
     date_text, time_text = parse_datetime(latest_time)
     
-    # Create output filename with timestamp
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M")
-    outfile = f"rivers_dashboard_{timestamp}.png"
+    # Create output filename from API timestamp in format "8 Sep 1PM.png"
+    try:
+        dt_part = latest_time.replace(" PST", "")
+        dt = datetime.strptime(dt_part, "%d-%b-%Y %H:%M")
+        # Format: "8 Sep 1PM" (no leading zero on day, no colon in time)
+        day = str(dt.day)  # No leading zero
+        month = dt.strftime("%b")  # Short month name
+        time_part = dt.strftime("%I%p").lstrip('0')  # Remove leading zero, no colon
+        outfile = f"{day} {month} {time_part}.png"
+    except Exception as e:
+        print(f"Error creating filename from API datetime: {e}")
+        # Fallback to current time only if API parsing fails
+        now = datetime.now()
+        day = str(now.day)
+        month = now.strftime("%b")
+        time_part = now.strftime("%I%p").lstrip('0')
+        outfile = f"{day} {month} {time_part}.png"
     
     # Build rows with API data
     rows = []
@@ -178,7 +192,7 @@ FONT_DATE   = pick_font([f"{WIN}/segoeuib.ttf", f"{LIN}/DejaVuSans-Bold.ttf"], 3
 FONT_H1     = pick_font([f"{WIN}/segoeuib.ttf", f"{LIN}/DejaVuSans-Bold.ttf"], 48)
 FONT_BODY   = pick_font([f"{WIN}/segoeui.ttf",  f"{LIN}/DejaVuSans.ttf"], 34)
 FONT_BODY_B = pick_font([f"{WIN}/segoeuib.ttf", f"{LIN}/DejaVuSans-Bold.ttf"], 34)
-FONT_RIGHT  = pick_font([f"{WIN}/segoeuib.ttf", f"{LIN}/DejaVuSans-Bold.ttf"], 28)
+FONT_RIGHT  = pick_font([f"{WIN}/segoeuib.ttf", f"{LIN}/DejaVuSans-Bold.ttf"], 32)
 
 # === Layout ===
 MARGIN_L   = 48
