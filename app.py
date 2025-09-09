@@ -5,9 +5,35 @@ from datetime import datetime
 import os
 import sys
 
+# Load environment variables from .env file if it exists (for local development)
+def load_env_file():
+    """Load environment variables from .env file if it exists"""
+    try:
+        with open('.env', 'r') as f:
+            for line in f:
+                line = line.strip()
+                if line and not line.startswith('#') and '=' in line:
+                    key, value = line.split('=', 1)
+                    os.environ[key.strip()] = value.strip()
+    except FileNotFoundError:
+        pass  # .env file doesn't exist, which is fine for GitHub Actions
+
+# Load .env file for local development
+load_env_file()
+
 # === API Configuration ===
-API_URL = "https://ffd.pmd.gov.pk/api/pm-dashboard"
-API_KEY = "PM_PORT_API_1a2b9c6d5e4f"
+API_URL = os.getenv("API_URL")
+API_KEY = os.getenv("API_KEY")
+
+if not API_KEY:
+    print("Error: API_KEY not found in environment variables")
+    print("Make sure you have a .env file locally or environment variables set in GitHub Actions")
+    sys.exit(1)
+
+if not API_URL:
+    print("Error: API_URL not found in environment variables")
+    print("Make sure you have a .env file locally or environment variables set in GitHub Actions")
+    sys.exit(1)
 
 # === Canvas ===
 W, H = 1080, 1920

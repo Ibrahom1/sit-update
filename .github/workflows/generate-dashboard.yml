@@ -34,6 +34,9 @@ jobs:
     - name: Generate dashboard
       run: |
         python app.py
+      env:
+        API_URL: ${{ secrets.API_URL }}
+        API_KEY: ${{ secrets.API_KEY }}
         
     - name: Configure Git
       run: |
