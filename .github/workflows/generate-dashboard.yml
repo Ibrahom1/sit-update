@@ -32,7 +32,7 @@ jobs:
         
     - name: Check for timestamp changes and generate dashboard
       run: |
-        python timestamp_adaptive_app.py
+        python app.py
       env:
         API_URL: ${{ secrets.API_URL }}
         API_KEY: ${{ secrets.API_KEY }}
