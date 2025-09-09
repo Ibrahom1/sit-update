@@ -78,8 +78,9 @@ def fetch_api_data():
 def parse_datetime(datetime_str):
     """Parse API datetime and convert to 12-hour format"""
     try:
-        # Parse the datetime string: "08-Sep-2025 11:00 PST"
-        dt_part = datetime_str.replace(" PST", "")
+        # Handle both PST and PKT timezone abbreviations
+        # Remove timezone abbreviation from the end
+        dt_part = datetime_str.replace(" PST", "").replace(" PKT", "")
         dt = datetime.strptime(dt_part, "%d-%b-%Y %H:%M")
         
         # Format date and time
@@ -119,15 +120,32 @@ def create_dashboard(api_data):
     
     # Create output filename from API timestamp in format "8 Sep 1PM.png"
     try:
-        dt_part = latest_time.replace(" PST", "")
-        dt = datetime.strptime(dt_part, "%d-%b-%Y %H:%M")
-        # Format: "8 Sep 1PM" (no leading zero on day, no colon in time)
+        # Handle both PST and PKT timezone abbreviations
+        dt_part = latest_time.replace(" PST", "").replace(" PKT", "")
+        
+        # Try different date formats that the API might use
+        date_formats = [
+            "%d-%b-%Y %H:%M",  # 08-Sep-2025 11:00 or 09-Sep-2025 07:00
+        ]
+        
+        dt = None
+        for fmt in date_formats:
+            try:
+                dt = datetime.strptime(dt_part, fmt)
+                break
+            except ValueError:
+                continue
+        
+        if dt is None:
+            raise ValueError(f"Unable to parse datetime: {dt_part}")
+            
+        # Format: "9 Sep 7AM" (no leading zero on day, no colon in time)
         day = str(dt.day)  # No leading zero
         month = dt.strftime("%b")  # Short month name
         time_part = dt.strftime("%I%p").lstrip('0')  # Remove leading zero, no colon
         outfile = f"{day} {month} {time_part}.png"
     except Exception as e:
-        print(f"Error creating filename from API datetime: {e}")
+        print(f"Error creating filename from API datetime '{latest_time}': {e}")
         # Fallback to current time only if API parsing fails
         now = datetime.now()
         day = str(now.day)
