@@ -1,16 +1,15 @@
-name: Generate River Dashboard
-
+name: Generate River Dashboard (Timestamp Only)
 on:
   schedule:
-    # Run at 57 minutes past every hour (1:57, 2:57, 3:57, etc.)
-    - cron: '57 * * * *'
+    # Check every 30 minutes for timestamp changes
+    - cron: '*/30 * * * *'
   workflow_dispatch: # Allow manual triggering
 
 jobs:
   generate-dashboard:
     runs-on: ubuntu-latest
     permissions:
-      contents: write  # Required for pushing to repository
+      contents: write
     
     steps:
     - name: Checkout repository
@@ -31,9 +30,9 @@ jobs:
         python -m pip install --upgrade pip
         pip install pillow requests
         
-    - name: Generate dashboard
+    - name: Check for timestamp changes and generate dashboard
       run: |
-        python app.py
+        python timestamp_adaptive_app.py
       env:
         API_URL: ${{ secrets.API_URL }}
         API_KEY: ${{ secrets.API_KEY }}
@@ -45,9 +44,9 @@ jobs:
         
     - name: Commit and push dashboard
       run: |
-        git add *.png
+        git add *.png *.timestamp
         if git diff --staged --quiet; then
-          echo "No changes to commit"
+          echo "No changes to commit - timestamp unchanged"
         else
           git commit -m "Update river dashboard - $(date '+%Y-%m-%d %H:%M UTC')"
           git push

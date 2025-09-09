@@ -16,7 +16,7 @@ def load_env_file():
                     key, value = line.split('=', 1)
                     os.environ[key.strip()] = value.strip()
     except FileNotFoundError:
-        pass  # .env file doesn't exist, which is fine for GitHub Actions
+        pass
 
 # Load .env file for local development
 load_env_file()
@@ -27,20 +27,20 @@ API_KEY = os.getenv("API_KEY")
 
 if not API_KEY:
     print("Error: API_KEY not found in environment variables")
-    print("Make sure you have a .env file locally or environment variables set in GitHub Actions")
     sys.exit(1)
 
 if not API_URL:
     print("Error: API_URL not found in environment variables")
-    print("Make sure you have a .env file locally or environment variables set in GitHub Actions")
     sys.exit(1)
 
-# === Canvas ===
+# === Constants ===
+TIMESTAMP_FILE = "last_reading_time.timestamp"
+
+# [All your existing constants remain the same]
 W, H = 1080, 1920
 BG = "#FFF9F0"
 HEADER_GREEN = "#0A6B46"
 
-# === Colors ===
 SEVERITY_COLORS = {
     "NORMAL":     "#0F8A26",
     "LOW":        "#00B5E2", 
@@ -72,7 +72,6 @@ TREND_COLORS = {
     "Rising":  "#E00000",
 }
 
-# === Station Mapping ===
 STATION_MAPPING = {
     "Jassar": {"api_name": "Jassar", "title": "Jassar at Ravi", "short_name": "Jassar"},
     "Shahdara": {"api_name": "Shahdara", "title": "Shahdara at Ravi", "short_name": "Shahdara"},
@@ -90,10 +89,7 @@ GROUPS = [[0,1,2],[3,4,5,6],[7,8]]
 def fetch_api_data():
     """Fetch data from the API"""
     try:
-        # API requires POST request with form data
-        data = {
-            'API_KEY': API_KEY
-        }
+        data = {'API_KEY': API_KEY}
         response = requests.post(API_URL, data=data, timeout=1000)
         response.raise_for_status()
         return response.json()
@@ -101,22 +97,46 @@ def fetch_api_data():
         print(f"Error fetching API data: {e}")
         sys.exit(1)
 
+def get_last_timestamp():
+    """Get the last processed timestamp"""
+    try:
+        with open(TIMESTAMP_FILE, 'r') as f:
+            return f.read().strip()
+    except FileNotFoundError:
+        return None
+
+def save_timestamp(timestamp):
+    """Save the current timestamp"""
+    with open(TIMESTAMP_FILE, 'w') as f:
+        f.write(timestamp)
+
+def should_generate_dashboard(api_data):
+    """
+    Determine if we should generate a new dashboard based ONLY on timestamp change
+    """
+    current_timestamp = api_data.get('latest_reading_time', '')
+    last_timestamp = get_last_timestamp()
+    
+    print(f"🕐 Current API timestamp: {current_timestamp}")
+    print(f"🕐 Last saved timestamp: {last_timestamp}")
+    
+    if current_timestamp != last_timestamp:
+        print("✅ TIMESTAMP CHANGED - Generating new dashboard")
+        return True, current_timestamp
+    else:
+        print("❌ TIMESTAMP UNCHANGED - Skipping dashboard generation")
+        return False, current_timestamp
+
 def parse_datetime(datetime_str):
     """Parse API datetime and convert to 12-hour format"""
     try:
-        # Handle both PST and PKT timezone abbreviations
-        # Remove timezone abbreviation from the end
         dt_part = datetime_str.replace(" PST", "").replace(" PKT", "")
         dt = datetime.strptime(dt_part, "%d-%b-%Y %H:%M")
-        
-        # Format date and time
         date_text = dt.strftime("%d %b %Y")
-        time_text = dt.strftime("%I:%M %p").lstrip('0')  # Remove leading zero and add AM/PM
-        
+        time_text = dt.strftime("%I:%M %p").lstrip('0')
         return date_text, time_text
     except Exception as e:
         print(f"Error parsing datetime: {e}")
-        # Fallback to current time
         now = datetime.now()
         return now.strftime("%d %b %Y"), now.strftime("%I:%M %p").lstrip('0')
 
@@ -130,7 +150,6 @@ def find_station_data(api_data, station_name):
 def format_flow(discharge):
     """Format discharge value with commas"""
     try:
-        # Remove existing commas and convert to int then back to string with commas
         clean_discharge = str(discharge).replace(',', '')
         formatted = f"{int(clean_discharge):,} cusecs"
         return formatted
@@ -139,20 +158,12 @@ def format_flow(discharge):
 
 def create_dashboard(api_data):
     """Create the dashboard with API data"""
-    
-    # Parse latest reading time
     latest_time = api_data.get('latest_reading_time', '')
     date_text, time_text = parse_datetime(latest_time)
     
-    # Create output filename from API timestamp in format "8 Sep 1PM.png"
     try:
-        # Handle both PST and PKT timezone abbreviations
         dt_part = latest_time.replace(" PST", "").replace(" PKT", "")
-        
-        # Try different date formats that the API might use
-        date_formats = [
-            "%d-%b-%Y %H:%M",  # 08-Sep-2025 11:00 or 09-Sep-2025 07:00
-        ]
+        date_formats = ["%d-%b-%Y %H:%M"]
         
         dt = None
         for fmt in date_formats:
@@ -165,35 +176,27 @@ def create_dashboard(api_data):
         if dt is None:
             raise ValueError(f"Unable to parse datetime: {dt_part}")
             
-        # Format: "9 Sep 7AM" (no leading zero on day, no colon in time)
-        day = str(dt.day)  # No leading zero
-        month = dt.strftime("%b")  # Short month name
-        time_part = dt.strftime("%I%p").lstrip('0')  # Remove leading zero, no colon
+        day = str(dt.day)
+        month = dt.strftime("%b")
+        time_part = dt.strftime("%I%p").lstrip('0')
         outfile = f"{day} {month} {time_part}.png"
     except Exception as e:
         print(f"Error creating filename from API datetime '{latest_time}': {e}")
-        # Fallback to current time only if API parsing fails
         now = datetime.now()
         day = str(now.day)
         month = now.strftime("%b")
         time_part = now.strftime("%I%p").lstrip('0')
         outfile = f"{day} {month} {time_part}.png"
     
-    # Build rows with API data
     rows = []
     for station_key, station_info in STATION_MAPPING.items():
         api_station = find_station_data(api_data, station_info['api_name'])
         
         if api_station:
-            # Get status and map it
             status = api_station.get('status', 'NORMAL')
             severity = SEVERITY_DISPLAY.get(status, 'Normal')
-            
-            # Get flow (prioritize outflow_discharge)
             flow = api_station.get('outflow_discharge', api_station.get('inflow_discharge', '0'))
             flow_formatted = format_flow(flow)
-            
-            # Get trend
             trend = api_station.get('outflow_trend', api_station.get('inflow_trend', 'Steady'))
             
             rows.append({
@@ -202,10 +205,9 @@ def create_dashboard(api_data):
                 "flow": flow_formatted,
                 "trend": trend,
                 "short_name": station_info['short_name'],
-                "status": status  # Keep original status for color mapping
+                "status": status
             })
         else:
-            # Fallback data if station not found
             print(f"Warning: Station {station_info['api_name']} not found in API data")
             rows.append({
                 "title": station_info['title'],
@@ -218,7 +220,7 @@ def create_dashboard(api_data):
     
     return rows, date_text, time_text, outfile
 
-# === Fonts (portable loader) ===
+# === Font Setup ===
 def pick_font(paths, size):
     for p in paths:
         if os.path.exists(p):
@@ -239,16 +241,14 @@ FONT_BODY   = pick_font([f"{WIN}/segoeui.ttf",  f"{LIN}/DejaVuSans.ttf"], 34)
 FONT_BODY_B = pick_font([f"{WIN}/segoeuib.ttf", f"{LIN}/DejaVuSans-Bold.ttf"], 34)
 FONT_RIGHT  = pick_font([f"{WIN}/segoeuib.ttf", f"{LIN}/DejaVuSans-Bold.ttf"], 28)
 
-# === Layout ===
+# === Layout Constants ===
 MARGIN_L   = 48
 TEXT_W     = 690
 TITLE_GAP  = 12
 ROW_GAP    = 24
 GROUP_GAP  = 28
-
 HEADER_H   = 250
 SEP_H      = 13
-
 TIMEX      = W - 230
 DOT_R      = 24
 LINE_W     = 6
@@ -258,12 +258,7 @@ def tlen(draw, txt, font):
     return draw.textlength(txt, font=font)
 
 def draw_status(draw, x, y, maxw, sev, flow, trend):
-    """
-    Status – <sev> Flood (<flow>) and <trend> Trend
-    - (<flow>) is bold
-    - wraps to a second line before 'and' if needed
-    Returns bottom y of the block.
-    """
+    """Draw status with proper formatting and wrapping"""
     full = f"Status – {sev} Flood ({flow}) and {trend} Trend"
     lh = int(FONT_BODY.size * 1.35)
 
@@ -298,17 +293,8 @@ def draw_status(draw, x, y, maxw, sev, flow, trend):
     draw.text((cx2, y2), " Trend", font=FONT_BODY, fill="#111111")
     return y2 + lh
 
-def main():
-    """Main function to generate the dashboard"""
-    print("Fetching API data...")
-    api_data = fetch_api_data()
-    
-    print("Processing data...")
-    rows, date_text, time_text, outfile = create_dashboard(api_data)
-    
-    print("Generating image...")
-    
-    # === Render ===
+def generate_image(rows, date_text, time_text, outfile):
+    """Generate the dashboard image"""
     img = Image.new("RGB", (W, H), BG)
     d = ImageDraw.Draw(img)
 
@@ -341,38 +327,29 @@ def main():
     title1 = "NEOC Daily Rivers"
     title2 = "Situation Update"
 
-    # Custom leading between lines
     LEAD_AFTER_LINE1 = 10
     LEAD_AFTER_LINE2 = 20
 
-    # Calculate the widest line to determine block width
     line1_width = d.textlength(title1, font=FONT_TITLE)
     line2_width = d.textlength(title2, font=FONT_TITLE)
     date_time_gap = 60
     date_time_width = d.textlength(date_text, font=FONT_DATE) + date_time_gap + d.textlength(time_text, font=FONT_DATE)
 
     block_width = max(line1_width, line2_width, date_time_width)
-
-    # Center the text block horizontally in available space
     text_block_x = text_start_x + (available_width - block_width) // 2
-
-    # Calculate block height for vertical centering
     block_height = FONT_TITLE.size + LEAD_AFTER_LINE1 + FONT_TITLE.size + LEAD_AFTER_LINE2 + FONT_DATE.size
     text_block_y = (HEADER_H - block_height) // 2
 
-    # Draw the centered text block
     y_text = text_block_y
 
-    # Line 1: "NEOC Daily Rivers" - centered
+    # Draw header text
     line1_x = text_block_x + (block_width - line1_width) // 2
     d.text((line1_x, y_text), title1, font=FONT_TITLE, fill="white")
 
-    # Line 2: "Situation Update" - centered
     y_text += FONT_TITLE.size + LEAD_AFTER_LINE1
     line2_x = text_block_x + (block_width - line2_width) // 2
     d.text((line2_x, y_text), title2, font=FONT_TITLE, fill="white")
 
-    # Line 3: Date and time - centered as a unit
     y_text += FONT_TITLE.size + LEAD_AFTER_LINE2
     date_time_start_x = text_block_x + (block_width - date_time_width) // 2
     d.text((date_time_start_x, y_text), date_text, font=FONT_DATE, fill="white")
@@ -382,16 +359,14 @@ def main():
     # White separator
     d.rectangle([0, HEADER_H, W, HEADER_H + SEP_H], fill="white")
 
-    # Body
+    # Body content
     y = HEADER_H + SEP_H + 26
     dot_ys = []
 
     for i, r in enumerate(rows):
-        # Station heading (bold)
         d.text((MARGIN_L, y), f"{r['title']}:", font=FONT_H1, fill="#111111")
         y += FONT_H1.size + TITLE_GAP
 
-        # Status block (bold cusecs + wrapping)
         bottom = draw_status(d, MARGIN_L, y, TEXT_W, r["severity"], r["flow"], r["trend"])
         mid = (y + bottom) // 2
         dot_ys.append(mid)
@@ -403,14 +378,13 @@ def main():
     # Right-side dots + labels
     for i, r in enumerate(rows):
         ydot = dot_ys[i]
-        # Use the original status for color mapping
         color = SEVERITY_COLORS.get(r["status"], "#0F8A26")
         d.ellipse([TIMEX - DOT_R, ydot - DOT_R, TIMEX + DOT_R, ydot + DOT_R],
                   fill=color, outline=None)
         d.text((TIMEX + LABEL_PADX, ydot - FONT_RIGHT.size // 2),
                r["short_name"], font=FONT_RIGHT, fill="#1a1a1a")
 
-    # Independent connectors (pairwise, not through circles)
+    # Connectors
     for group in GROUPS:
         for a, b in zip(group, group[1:]):
             y1, y2 = dot_ys[a], dot_ys[b]
@@ -420,7 +394,30 @@ def main():
     d.rectangle([0, H - 32, W, H], fill=HEADER_GREEN)
 
     img.save(outfile, "PNG")
-    print(f"Saved {outfile}")
+    return outfile
+
+def main():
+    """Main function with timestamp-only adaptive generation"""
+    print("=== TIMESTAMP-ONLY ADAPTIVE DASHBOARD ===")
+    print("Fetching API data...")
+    api_data = fetch_api_data()
+    
+    print("Checking for timestamp changes...")
+    should_generate, current_timestamp = should_generate_dashboard(api_data)
+    
+    if should_generate:
+        print("📈 Generating new dashboard...")
+        rows, date_text, time_text, outfile = create_dashboard(api_data)
+        generated_file = generate_image(rows, date_text, time_text, outfile)
+        
+        # Save the new timestamp
+        save_timestamp(current_timestamp)
+        
+        print(f"✅ Generated: {generated_file}")
+        print(f"📝 Saved timestamp: {current_timestamp}")
+    else:
+        print("⏭️  No update needed - timestamp unchanged")
+        print("💡 Dashboard generation skipped to save resources")
 
 if __name__ == "__main__":
     main()
