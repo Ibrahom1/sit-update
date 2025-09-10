@@ -37,7 +37,7 @@ if not API_URL:
 TIMESTAMP_FILE = "last_reading_time.timestamp"
 
 # [All your existing constants remain the same]
-W = 1080  # Width remains fixed
+W, H = 1080, 1920
 BG = "#FFF9F0"
 HEADER_GREEN = "#0A6B46"
 
@@ -72,36 +72,19 @@ TREND_COLORS = {
     "Rising":  "#E00000",
 }
 
-# FIXED: Use ordered list instead of dictionary to maintain exact station order
-STATION_ORDER = [
-    # Ravi River stations (0-3)
-    {"key": "Jassar", "api_name": "Jassar", "title": "Jassar at Ravi", "short_name": "Jassar"},
-    {"key": "Shahdara", "api_name": "Shahdara", "title": "Shahdara at Ravi", "short_name": "Shahdara"},
-    {"key": "Balloki", "api_name": "Balloki", "title": "Balloki at Ravi", "short_name": "Balloki"},
-    {"key": "Sidhnai", "api_name": "Sidhnai", "title": "Sidhnai at Ravi", "short_name": "Sidhnai"},
-    
-    # Chenab River stations (4-6)
-    {"key": "Marala", "api_name": "Marala", "title": "Marala at Chenab", "short_name": "Marala"},
-    {"key": "Trimmu", "api_name": "Trimmu", "title": "Trimmu at Chenab", "short_name": "Trimmu"},
-    {"key": "Panjnad", "api_name": "Panjnad", "title": "Panjnad at Chenab", "short_name": "Panjnad"},
-    
-    # Sutlej River stations (7-9)
-    {"key": "Ganda Singh Wala", "api_name": "Ganda Singh Wala", "title": "Ganda Singh Wala at Sutlej", "short_name": "G. S. Wala"},
-    {"key": "Sulemanki", "api_name": "Sulemanki", "title": "Sulemanki at Sutlej", "short_name": "Sulemanki"},
-    {"key": "Islam", "api_name": "Islam", "title": "Islam at Sutlej", "short_name": "Islam"},
-    
-    # Indus River station (10) - standalone
-    {"key": "Guddu", "api_name": "Guddu", "title": "Guddu at Indus", "short_name": "Guddu"},
-]
+STATION_MAPPING = {
+    "Jassar": {"api_name": "Jassar", "title": "Jassar at Ravi", "short_name": "Jassar"},
+    "Shahdara": {"api_name": "Shahdara", "title": "Shahdara at Ravi", "short_name": "Shahdara"},
+    "Balloki": {"api_name": "Balloki", "title": "Balloki at Ravi", "short_name": "Balloki"},
+    "Marala": {"api_name": "Marala", "title": "Marala at Chenab", "short_name": "Marala"},
+    "Trimmu": {"api_name": "Trimmu", "title": "Trimmu at Chenab", "short_name": "Trimmu"},
+    "Panjnad": {"api_name": "Panjnad", "title": "Panjnad at Chenab", "short_name": "Panjnad"},
+    "Guddu": {"api_name": "Guddu", "title": "Guddu at Indus", "short_name": "Guddu"},
+    "Ganda Singh Wala": {"api_name": "Ganda Singh Wala", "title": "Ganda Singh Wala at Sutlej", "short_name": "G. S. Wala"},
+    "Sulemanki": {"api_name": "Sulemanki", "title": "Sulemanki at Sutlej", "short_name": "Sulemanki"},
+}
 
-# FIXED: Correct river groupings based on your requirements
-# Each group contains the indices of stations that should be connected
-GROUPS = [
-    [0, 1, 2, 3],    # Ravi River: Jassar(0) -> Shahdara(1) -> Balloki(2) -> Sidhnai(3)
-    [4, 5, 6],       # Chenab River: Marala(4) -> Trimmu(5) -> Panjnad(6)
-    [7, 8, 9],       # Sutlej River: G. S. Wala(7) -> Sulemanki(8) -> Islam(9)
-    # Indus River: Guddu(10) - standalone, no connections
-]
+GROUPS = [[0,1,2],[3,4,5,6],[7,8]]
 
 def fetch_api_data():
     """Fetch data from the API"""
@@ -173,72 +156,10 @@ def format_flow(discharge):
     except (ValueError, TypeError):
         return f"{discharge} cusecs"
 
-def calculate_required_height(num_stations):
-    """Calculate the minimum height needed for all stations"""
-    # Constants for layout calculation
-    HEADER_H = 250
-    SEP_H = 13
-    MARGIN_TOP = 26
-    BOTTOM_BAR_H = 32
-    
-    # Per-station spacing
-    ROW_GAP = 20
-    GROUP_GAP = 24
-    TITLE_GAP = 12
-    
-    # Font sizes (approximate heights)
-    FONT_H1_SIZE = 48
-    FONT_BODY_SIZE = 34
-    LINE_HEIGHT_MULTIPLIER = 1.35
-    
-    # Calculate content height
-    content_start = HEADER_H + SEP_H + MARGIN_TOP
-    
-    # Each station needs:
-    # - Title line (FONT_H1_SIZE)
-    # - Title gap (TITLE_GAP) 
-    # - Status lines (2 lines max, each FONT_BODY_SIZE * LINE_HEIGHT_MULTIPLIER)
-    # - Row gap (ROW_GAP)
-    
-    status_height = int(FONT_BODY_SIZE * LINE_HEIGHT_MULTIPLIER * 2)  # Max 2 lines
-    per_station_height = FONT_H1_SIZE + TITLE_GAP + status_height + ROW_GAP
-    
-    # Add group gaps after Ravi (after station 3), Chenab (after station 6), Sutlej (after station 9)
-    # That's 3 group gaps total
-    num_group_gaps = 3
-    
-    total_content_height = (num_stations * per_station_height) + (num_group_gaps * GROUP_GAP)
-    
-    # Add some padding for safety
-    safety_padding = 100
-    
-    required_height = content_start + total_content_height + BOTTOM_BAR_H + safety_padding
-    
-    # Minimum height should be at least the original 1920
-    min_height = 1920
-    
-    final_height = max(min_height, required_height)
-    
-    print(f"📏 Height calculation:")
-    print(f"   Stations: {num_stations}")
-    print(f"   Per station height: {per_station_height}")
-    print(f"   Group gaps: {num_group_gaps}")
-    print(f"   Calculated height: {required_height}")
-    print(f"   Final height: {final_height}")
-    
-    return final_height
-
 def create_dashboard(api_data):
-    """Create the dashboard with API data using correct station order"""
+    """Create the dashboard with API data"""
     latest_time = api_data.get('latest_reading_time', '')
     date_text, time_text = parse_datetime(latest_time)
-    
-    # Debug: Print all available station names in API data
-    print("=== DEBUG: Available stations in API data ===")
-    api_stations = api_data.get('data', [])
-    for station in api_stations:
-        print(f"  - {station.get('name', 'UNNAMED')}")
-    print("=" * 50)
     
     try:
         dt_part = latest_time.replace(" PST", "").replace(" PKT", "")
@@ -267,9 +188,8 @@ def create_dashboard(api_data):
         time_part = now.strftime("%I%p").lstrip('0')
         outfile = f"{day} {month} {time_part}.png"
     
-    # Process stations in the correct order
     rows = []
-    for station_info in STATION_ORDER:
+    for station_key, station_info in STATION_MAPPING.items():
         api_station = find_station_data(api_data, station_info['api_name'])
         
         if api_station:
@@ -279,7 +199,6 @@ def create_dashboard(api_data):
             flow_formatted = format_flow(flow)
             trend = api_station.get('outflow_trend', api_station.get('inflow_trend', 'Steady'))
             
-            print(f"✅ Found station: {station_info['api_name']}")
             rows.append({
                 "title": station_info['title'],
                 "severity": severity,
@@ -289,7 +208,7 @@ def create_dashboard(api_data):
                 "status": status
             })
         else:
-            print(f"❌ Station {station_info['api_name']} not found in API data - using default values")
+            print(f"Warning: Station {station_info['api_name']} not found in API data")
             rows.append({
                 "title": station_info['title'],
                 "severity": "Normal",
@@ -298,20 +217,6 @@ def create_dashboard(api_data):
                 "short_name": station_info['short_name'],
                 "status": "NORMAL"
             })
-    
-    print(f"📊 Total stations to display: {len(rows)}")
-    for i, row in enumerate(rows):
-        print(f"  {i}: {row['short_name']} - {row['severity']}")
-    
-    # Debug: Print the corrected groupings
-    print("\n=== CORRECTED RIVER GROUPINGS ===")
-    river_names = ["Ravi River", "Chenab River", "Sutlej River"]
-    for i, group in enumerate(GROUPS):
-        river_name = river_names[i] if i < len(river_names) else f"Group {i+1}"
-        stations_in_group = [rows[j]['short_name'] for j in group if j < len(rows)]
-        print(f"{river_name}: {' -> '.join(stations_in_group)}")
-    print(f"Indus River: {rows[10]['short_name']} (standalone)")
-    print("=" * 50)
     
     return rows, date_text, time_text, outfile
 
@@ -340,8 +245,8 @@ FONT_RIGHT  = pick_font([f"{WIN}/segoeuib.ttf", f"{LIN}/DejaVuSans-Bold.ttf"], 2
 MARGIN_L   = 48
 TEXT_W     = 690
 TITLE_GAP  = 12
-ROW_GAP    = 20    # Reduced from 24 to 20 to save space
-GROUP_GAP  = 24    # Reduced from 28 to 24 to save space
+ROW_GAP    = 24
+GROUP_GAP  = 28
 HEADER_H   = 250
 SEP_H      = 13
 TIMEX      = W - 230
@@ -389,10 +294,7 @@ def draw_status(draw, x, y, maxw, sev, flow, trend):
     return y2 + lh
 
 def generate_image(rows, date_text, time_text, outfile):
-    """Generate the dashboard image with dynamic height"""
-    # Calculate required height based on number of stations
-    H = calculate_required_height(len(rows))
-    
+    """Generate the dashboard image"""
     img = Image.new("RGB", (W, H), BG)
     d = ImageDraw.Draw(img)
 
@@ -470,10 +372,7 @@ def generate_image(rows, date_text, time_text, outfile):
         dot_ys.append(mid)
 
         y = bottom + ROW_GAP
-        
-        # Add group gaps after each river section
-        # After Ravi (station 3), Chenab (station 6), Sutlej (station 9)
-        if i in (3, 6, 9):  # After Sidhnai, Panjnad, Islam
+        if i in (2, 6):
             y += GROUP_GAP
 
     # Right-side dots + labels
@@ -484,25 +383,12 @@ def generate_image(rows, date_text, time_text, outfile):
                   fill=color, outline=None)
         d.text((TIMEX + LABEL_PADX, ydot - FONT_RIGHT.size // 2),
                r["short_name"], font=FONT_RIGHT, fill="#1a1a1a")
-        print(f"Station {i} ({r['short_name']}): Y position = {ydot}")
 
-    print(f"Image height: {H}, Last station Y: {max(dot_ys) if dot_ys else 0}")
-
-    # FIXED: Connectors with correct river groupings - no continuous line
-    print("\n=== DRAWING CONNECTORS ===")
-    river_names = ["Ravi", "Chenab", "Sutlej"]
-    for group_idx, group in enumerate(GROUPS):
-        river_name = river_names[group_idx] if group_idx < len(river_names) else f"Group {group_idx+1}"
-        print(f"Drawing connectors for {river_name} River: {group}")
-        
+    # Connectors
+    for group in GROUPS:
         for a, b in zip(group, group[1:]):
-            if a < len(dot_ys) and b < len(dot_ys):  # Safety check for dynamic stations
-                y1, y2 = dot_ys[a], dot_ys[b]
-                d.line([TIMEX, y1 + DOT_R, TIMEX, y2 - DOT_R], fill="#222222", width=LINE_W)
-                print(f"  Connected {rows[a]['short_name']} (pos {a}) to {rows[b]['short_name']} (pos {b})")
-    
-    # Indus River (Guddu) is standalone - no connections
-    print(f"Indus River: {rows[10]['short_name']} (standalone - no connections)")
+            y1, y2 = dot_ys[a], dot_ys[b]
+            d.line([TIMEX, y1 + DOT_R, TIMEX, y2 - DOT_R], fill="#222222", width=LINE_W)
 
     # Bottom bar
     d.rectangle([0, H - 32, W, H], fill=HEADER_GREEN)
@@ -530,7 +416,7 @@ def main():
         print(f"✅ Generated: {generated_file}")
         print(f"📝 Saved timestamp: {current_timestamp}")
     else:
-        print("⏭️  No update needed - timestamp unchanged")
+        print(⏭️  No update needed - timestamp unchanged")
         print("💡 Dashboard generation skipped to save resources")
 
 if __name__ == "__main__":
