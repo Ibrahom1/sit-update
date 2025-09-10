@@ -240,31 +240,56 @@ def create_dashboard(api_data):
         print(f"  - {station.get('name', 'UNNAMED')}")
     print("=" * 50)
     
+    # --- Filename construction with robust 12-hour time handling ---
+    # We want filenames like: 10 Sep 8 AM.png, 10 Sep 12 PM.png, 10 Sep 1 PM.png
+    # even if the source timestamp is 10-Sep-2025 13:00 PKT
     try:
         dt_part = latest_time.replace(" PST", "").replace(" PKT", "")
-        date_formats = ["%d-%b-%Y %H:%M"]
-        
-        dt = None
-        for fmt in date_formats:
-            try:
-                dt = datetime.strptime(dt_part, fmt)
-                break
-            except ValueError:
-                continue
-        
-        if dt is None:
-            raise ValueError(f"Unable to parse datetime: {dt_part}")
-            
-        day = str(dt.day)
+        dt = datetime.strptime(dt_part, "%d-%b-%Y %H:%M")
+
+        day = str(dt.day)  # No leading zero
         month = dt.strftime("%b")
-        time_part = dt.strftime("%I%p").lstrip('0')
+
+        # Derive hour in 12-hour clock manually to avoid platform-specific %-I issues
+        hour24 = dt.hour
+        if hour24 == 0:
+            hour12 = 12
+            ampm = "AM"
+        elif 1 <= hour24 < 12:
+            hour12 = hour24
+            ampm = "AM"
+        elif hour24 == 12:
+            hour12 = 12
+            ampm = "PM"
+        else:  # 13-23
+            hour12 = hour24 - 12
+            ampm = "PM"
+
+        # If minutes are not zero, include them (e.g., 1_30 PM); else omit minutes like user examples
+        if dt.minute == 0:
+            time_part = f"{hour12} {ampm}"  # e.g., 1 PM
+        else:
+            time_part = f"{hour12}-{dt.minute:02d} {ampm}"  # e.g., 1-30 PM (hyphen avoids filesystem/colon issues)
+
         outfile = f"{day} {month} {time_part}.png"
     except Exception as e:
         print(f"Error creating filename from API datetime '{latest_time}': {e}")
         now = datetime.now()
         day = str(now.day)
         month = now.strftime("%b")
-        time_part = now.strftime("%I%p").lstrip('0')
+        hour24 = now.hour
+        if hour24 == 0:
+            hour12 = 12; ampm = "AM"
+        elif 1 <= hour24 < 12:
+            hour12 = hour24; ampm = "AM"
+        elif hour24 == 12:
+            hour12 = 12; ampm = "PM"
+        else:
+            hour12 = hour24 - 12; ampm = "PM"
+        if now.minute == 0:
+            time_part = f"{hour12} {ampm}"
+        else:
+            time_part = f"{hour12}-{now.minute:02d} {ampm}"
         outfile = f"{day} {month} {time_part}.png"
     
     # Process stations in the correct order
