@@ -1,8 +1,8 @@
 name: Generate River Dashboard (Timestamp Only)
 on:
   schedule:
-    # Check every 30 minutes for timestamp changes
-    - cron: '*/30 * * * *'
+    # Check every 20 minutes for timestamp changes
+    - cron: '*/20 * * * *'
   workflow_dispatch: # Allow manual triggering
 
 jobs:
