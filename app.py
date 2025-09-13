@@ -73,25 +73,25 @@ TREND_COLORS = {
     "Rising": "#E00000",
 }
 
-# Station configuration with {rivername} at {headwork} format
+# Station configuration with CORRECTED {rivername} at {headwork} format
 STATION_ORDER = [
-    # Ravi River stations (0-3)
+    # Ravi River stations (0-3) - CORRECTED FORMAT
     {"key": "Jassar", "api_name": "Jassar", "river": "Ravi", "headwork": "Jassar", "short_name": "Jassar"},
     {"key": "Shahdara", "api_name": "Shahdara", "river": "Ravi", "headwork": "Shahdara", "short_name": "Shahdara"},
     {"key": "Balloki", "api_name": "Balloki", "river": "Ravi", "headwork": "Balloki", "short_name": "Balloki"},
     {"key": "Sidhnai", "api_name": "Sidhnai", "river": "Ravi", "headwork": "Sidhnai", "short_name": "Sidhnai"},
     
-    # Chenab River stations (4-6)
+    # Chenab River stations (4-6) - CORRECTED FORMAT
     {"key": "Marala", "api_name": "Marala", "river": "Chenab", "headwork": "Marala", "short_name": "Marala"},
     {"key": "Trimmu", "api_name": "Trimmu", "river": "Chenab", "headwork": "Trimmu", "short_name": "Trimmu"},
     {"key": "Panjnad", "api_name": "Panjnad", "river": "Chenab", "headwork": "Panjnad", "short_name": "Panjnad"},
     
-    # Sutlej River stations (7-9)
+    # Sutlej River stations (7-9) - CORRECTED FORMAT
     {"key": "Ganda Singh Wala", "api_name": "Ganda Singh Wala", "river": "Sutlej", "headwork": "Ganda Singh Wala", "short_name": "G. S. Wala"},
     {"key": "Sulemanki", "api_name": "Sulemanki", "river": "Sutlej", "headwork": "Sulemanki", "short_name": "Sulemanki"},
     {"key": "Islam", "api_name": "Islam", "river": "Sutlej", "headwork": "Islam", "short_name": "Islam"},
     
-    # Indus River station (10) - standalone
+    # Indus River station (10) - standalone - CORRECTED FORMAT  
     {"key": "Guddu", "api_name": "Guddu", "river": "Indus", "headwork": "Guddu", "short_name": "Guddu"},
 ]
 
