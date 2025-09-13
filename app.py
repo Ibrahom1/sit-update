@@ -73,7 +73,7 @@ TREND_COLORS = {
     "Rising": "#E00000",
 }
 
-# Station configuration with CORRECTED {rivername} at {headwork} format
+# Station configuration with CORRECTED {rivername} at {headwork} format - NOW INCLUDING SUKKUR AND KOTRI
 STATION_ORDER = [
     # Ravi River stations (0-3) - CORRECTED FORMAT
     {"key": "Jassar", "api_name": "Jassar", "river": "Ravi", "headwork": "Jassar", "short_name": "Jassar"},
@@ -91,16 +91,18 @@ STATION_ORDER = [
     {"key": "Sulemanki", "api_name": "Sulemanki", "river": "Sutlej", "headwork": "Sulemanki", "short_name": "Sulemanki"},
     {"key": "Islam", "api_name": "Islam", "river": "Sutlej", "headwork": "Islam", "short_name": "Islam"},
     
-    # Indus River station (10) - standalone - CORRECTED FORMAT  
+    # Indus River stations (10-12) - CORRECTED ORDER: Guddu -> Sukkur -> Kotri
     {"key": "Guddu", "api_name": "Guddu", "river": "Indus", "headwork": "Guddu", "short_name": "Guddu"},
+    {"key": "Sukkur", "api_name": "Sukkur", "river": "Indus", "headwork": "Sukkur", "short_name": "Sukkur"},
+    {"key": "Kotri", "api_name": "Kotri", "river": "Indus", "headwork": "Kotri", "short_name": "Kotri"},
 ]
 
-# River groupings for connector lines
+# River groupings for connector lines - UPDATED TO INCLUDE INDUS RIVER CONNECTIONS
 GROUPS = [
-    [0, 1, 2, 3],  # Ravi River: Jassar(0) -> Shahdara(1) -> Balloki(2) -> Sidhnai(3)
-    [4, 5, 6],     # Chenab River: Marala(4) -> Trimmu(5) -> Panjnad(6)
-    [7, 8, 9],     # Sutlej River: G. S. Wala(7) -> Sulemanki(8) -> Islam(9)
-    # Indus River: Guddu(10) - standalone, no connections
+    [0, 1, 2, 3],     # Ravi River: Jassar(0) -> Shahdara(1) -> Balloki(2) -> Sidhnai(3)
+    [4, 5, 6],        # Chenab River: Marala(4) -> Trimmu(5) -> Panjnad(6)
+    [7, 8, 9],        # Sutlej River: G. S. Wala(7) -> Sulemanki(8) -> Islam(9)
+    [10, 11, 12],     # Indus River: Guddu(10) -> Sukkur(11) -> Kotri(12)
 ]
 
 def fetch_api_data():
@@ -201,8 +203,8 @@ def calculate_required_height(num_stations):
     per_station_height = FONT_H1_SIZE + TITLE_GAP + status_height + ROW_GAP
     
     # Add group gaps after Ravi (after station 3), Chenab (after station 6), Sutlej (after station 9)
-    # That's 3 group gaps total
-    num_group_gaps = 3
+    # That's 3 group gaps total (not after Indus as it's last)
+    num_group_gaps = 3  # After Ravi, Chenab, Sutlej (not after Indus as it's last)
     total_content_height = (num_stations * per_station_height) + (num_group_gaps * GROUP_GAP)
     
     # Add some padding for safety
@@ -328,12 +330,11 @@ def create_dashboard(api_data):
     
     # Debug: Print the corrected groupings
     print("\n=== CORRECTED RIVER GROUPINGS ===")
-    river_names = ["Ravi River", "Chenab River", "Sutlej River"]
+    river_names = ["Ravi River", "Chenab River", "Sutlej River", "Indus River"]
     for i, group in enumerate(GROUPS):
         river_name = river_names[i] if i < len(river_names) else f"Group {i+1}"
         stations_in_group = [rows[j]['short_name'] for j in group if j < len(rows)]
         print(f"{river_name}: {' -> '.join(stations_in_group)}")
-    print(f"Indus River: {rows[10]['short_name']} (standalone)")
     print("=" * 50)
     
     return rows, date_text, time_text, outfile
@@ -523,7 +524,7 @@ def generate_image(rows, date_text, time_text, outfile):
     
     # Draw connectors with correct river groupings
     print("\n=== DRAWING CONNECTORS ===")
-    river_names = ["Ravi", "Chenab", "Sutlej"]
+    river_names = ["Ravi", "Chenab", "Sutlej", "Indus"]
     for group_idx, group in enumerate(GROUPS):
         river_name = river_names[group_idx] if group_idx < len(river_names) else f"Group {group_idx+1}"
         print(f"Drawing connectors for {river_name} River: {group}")
@@ -533,9 +534,6 @@ def generate_image(rows, date_text, time_text, outfile):
                 y1, y2 = dot_ys[a], dot_ys[b]
                 d.line([TIMEX, y1 + DOT_R, TIMEX, y2 - DOT_R], fill="#222222", width=LINE_W)
                 print(f"  Connected {rows[a]['short_name']} (pos {a}) to {rows[b]['short_name']} (pos {b})")
-    
-    # Indus River (Guddu) is standalone - no connections
-    print(f"Indus River: {rows[10]['short_name']} (standalone - no connections)")
     
     # Bottom bar
     d.rectangle([0, H - 32, W, H], fill=HEADER_GREEN)
