@@ -73,31 +73,31 @@ TREND_COLORS = {
     "Rising": "#E00000",
 }
 
-# Station configuration with CORRECTED {rivername} at {headwork} format - NOW INCLUDING SUKKUR AND KOTRI
+# Station configuration with CORRECTED format for ALL rivers: {rivername} at {headwork}
 STATION_ORDER = [
-    # Ravi River stations (0-3) - CORRECTED FORMAT
+    # Ravi River stations (0-3)
     {"key": "Jassar", "api_name": "Jassar", "river": "Ravi", "headwork": "Jassar", "short_name": "Jassar"},
     {"key": "Shahdara", "api_name": "Shahdara", "river": "Ravi", "headwork": "Shahdara", "short_name": "Shahdara"},
     {"key": "Balloki", "api_name": "Balloki", "river": "Ravi", "headwork": "Balloki", "short_name": "Balloki"},
     {"key": "Sidhnai", "api_name": "Sidhnai", "river": "Ravi", "headwork": "Sidhnai", "short_name": "Sidhnai"},
     
-    # Chenab River stations (4-6) - CORRECTED FORMAT
+    # Chenab River stations (4-6)
     {"key": "Marala", "api_name": "Marala", "river": "Chenab", "headwork": "Marala", "short_name": "Marala"},
     {"key": "Trimmu", "api_name": "Trimmu", "river": "Chenab", "headwork": "Trimmu", "short_name": "Trimmu"},
     {"key": "Panjnad", "api_name": "Panjnad", "river": "Chenab", "headwork": "Panjnad", "short_name": "Panjnad"},
     
-    # Sutlej River stations (7-9) - CORRECTED FORMAT
+    # Sutlej River stations (7-9) - FIXED: Now uses "Sutlej" as river name
     {"key": "Ganda Singh Wala", "api_name": "Ganda Singh Wala", "river": "Sutlej", "headwork": "Ganda Singh Wala", "short_name": "G. S. Wala"},
     {"key": "Sulemanki", "api_name": "Sulemanki", "river": "Sutlej", "headwork": "Sulemanki", "short_name": "Sulemanki"},
     {"key": "Islam", "api_name": "Islam", "river": "Sutlej", "headwork": "Islam", "short_name": "Islam"},
     
-    # Indus River stations (10-12) - CORRECTED ORDER: Guddu -> Sukkur -> Kotri
+    # Indus River stations (10-12) - FIXED: Now uses "Indus" as river name
     {"key": "Guddu", "api_name": "Guddu", "river": "Indus", "headwork": "Guddu", "short_name": "Guddu"},
     {"key": "Sukkur", "api_name": "Sukkur", "river": "Indus", "headwork": "Sukkur", "short_name": "Sukkur"},
     {"key": "Kotri", "api_name": "Kotri", "river": "Indus", "headwork": "Kotri", "short_name": "Kotri"},
 ]
 
-# River groupings for connector lines - UPDATED TO INCLUDE INDUS RIVER CONNECTIONS
+# River groupings for connector lines
 GROUPS = [
     [0, 1, 2, 3],     # Ravi River: Jassar(0) -> Shahdara(1) -> Balloki(2) -> Sidhnai(3)
     [4, 5, 6],        # Chenab River: Marala(4) -> Trimmu(5) -> Panjnad(6)
