@@ -73,7 +73,7 @@ TREND_COLORS = {
     "Rising": "#E00000",
 }
 
-# Station configuration with CORRECTED format for ALL rivers: {rivername} at {headwork}
+# Station configuration with CORRECTED format: {headwork} at {river}
 STATION_ORDER = [
     # Ravi River stations (0-3)
     {"key": "Jassar", "api_name": "Jassar", "river": "Ravi", "headwork": "Jassar", "short_name": "Jassar"},
@@ -86,12 +86,12 @@ STATION_ORDER = [
     {"key": "Trimmu", "api_name": "Trimmu", "river": "Chenab", "headwork": "Trimmu", "short_name": "Trimmu"},
     {"key": "Panjnad", "api_name": "Panjnad", "river": "Chenab", "headwork": "Panjnad", "short_name": "Panjnad"},
     
-    # Sutlej River stations (7-9) - FIXED: Now uses "Sutlej" as river name
+    # Sutlej River stations (7-9)
     {"key": "Ganda Singh Wala", "api_name": "Ganda Singh Wala", "river": "Sutlej", "headwork": "Ganda Singh Wala", "short_name": "G. S. Wala"},
     {"key": "Sulemanki", "api_name": "Sulemanki", "river": "Sutlej", "headwork": "Sulemanki", "short_name": "Sulemanki"},
     {"key": "Islam", "api_name": "Islam", "river": "Sutlej", "headwork": "Islam", "short_name": "Islam"},
     
-    # Indus River stations (10-12) - FIXED: Now uses "Indus" as river name
+    # Indus River stations (10-12)
     {"key": "Guddu", "api_name": "Guddu", "river": "Indus", "headwork": "Guddu", "short_name": "Guddu"},
     {"key": "Sukkur", "api_name": "Sukkur", "river": "Indus", "headwork": "Sukkur", "short_name": "Sukkur"},
     {"key": "Kotri", "api_name": "Kotri", "river": "Indus", "headwork": "Kotri", "short_name": "Kotri"},
@@ -289,13 +289,13 @@ def create_dashboard(api_data):
         
         outfile = f"{day} {month} {time_part}.png"
     
-    # Process stations in the correct order with {rivername} at {headwork} format
+    # Process stations in the correct order with {headwork} at {river} format
     rows = []
     for station_info in STATION_ORDER:
         api_station = find_station_data(api_data, station_info['api_name'])
         
-        # Create title in {rivername} at {headwork} format
-        title = f"{station_info['river']} at {station_info['headwork']}"
+        # Create title in {headwork} at {river} format (FIXED)
+        title = f"{station_info['headwork']} at {station_info['river']}"
         
         if api_station:
             status = api_station.get('status', 'NORMAL')
